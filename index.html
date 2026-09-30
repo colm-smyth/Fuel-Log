@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fuel Log">
+<meta name="description" content="Private, local-first petrol fill-up tracker with pump OCR and on-device location storage.">
+<title>Fuel Log · Private Petrol Tracker</title>
+<style>
+:root{
+  --bg:#f4f6f8;--panel:#ffffff;--panel2:#f8fafc;--text:#111827;--muted:#6b7280;
+  --line:#e5e7eb;--accent:#16a34a;--accent2:#15803d;--danger:#dc2626;--warn:#d97706;
+  --shadow:0 10px 30px rgba(15,23,42,.08);--radius:18px;--radius-sm:12px;
+}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.shell{min-height:100vh}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(17,24,39,.96);backdrop-filter:blur(10px);color:white;border-bottom:1px solid rgba(255,255,255,.08)}
+.topbar-inner{max-width:1180px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:14px 18px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:-.02em}
+.brand-mark{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#16a34a;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.brand small{display:block;font-size:11px;font-weight:500;color:#cbd5e1;letter-spacing:0}
+.top-actions{display:flex;gap:8px}
+.icon-btn{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:white;border-radius:10px;padding:9px 11px}
+main{max-width:1180px;margin:0 auto;padding:22px 18px 88px}
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-bottom:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.hero-copy{padding:26px}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{margin:8px 0 8px;font-size:clamp(28px,4.5vw,46px);line-height:1;letter-spacing:-.04em}
+.subtitle{color:var(--muted);max-width:680px;line-height:1.6;margin:0}
+.quick{padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:15px}
+.stat .k{color:var(--muted);font-size:12px;font-weight:700}
+.stat .v{font-size:24px;font-weight:800;margin-top:4px;letter-spacing:-.025em}
+.tabs{display:flex;gap:8px;overflow:auto;margin:18px 0}
+.tab{white-space:nowrap;border:1px solid var(--line);background:white;color:var(--muted);padding:10px 15px;border-radius:999px;font-weight:750}
+.tab.active{background:#111827;border-color:#111827;color:white}
+.panel{display:none}.panel.active{display:block}
+.capture-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:18px}
+.capture-card{overflow:hidden}
+.capture-head,.form-head,.section-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.capture-head h2,.form-head h2,.section-head h2{font-size:18px;margin:0}
+.camera-zone{padding:18px}
+.drop{border:2px dashed #cbd5e1;background:#f8fafc;border-radius:16px;min-height:310px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.drop.has-image{border-style:solid;background:#0b0f17}
+.drop img{display:none;width:100%;height:100%;max-height:480px;object-fit:contain}
+.drop.has-image img{display:block}
+.empty-capture{text-align:center;padding:30px;color:var(--muted)}
+.empty-capture .cam{font-size:46px;margin-bottom:10px}
+.capture-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.btn{border:none;border-radius:12px;padding:12px 15px;font-weight:800;transition:.15s transform,.15s opacity}
+.btn:active{transform:scale(.985)}
+.btn-primary{background:var(--accent);color:white}.btn-primary:hover{background:var(--accent2)}
+.btn-dark{background:#111827;color:white}.btn-light{background:#f3f4f6;color:#111827;border:1px solid var(--line)}
+.btn-danger{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.btn-wide{width:100%}
+.progress-wrap{display:none;margin-top:12px}.progress-wrap.show{display:block}
+.progress-line{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden}
+.progress-line i{display:block;width:0;height:100%;background:var(--accent);transition:width .2s}
+.progress-text{font-size:12px;color:var(--muted);margin-top:6px}
+.scan-debug{display:none;margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
+.scan-debug.show{display:block}
+.scan-debug-title{font-size:11px;font-weight:800;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+.scan-crops{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.scan-crop{background:white;border:1px solid var(--line);border-radius:9px;padding:6px}
+.scan-crop img{width:100%;height:58px;object-fit:contain;background:#eef2f7;border-radius:6px}
+.scan-crop small{display:block;margin-top:4px;color:var(--muted);font-size:10px}
+.form-body{padding:18px 20px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:flex;flex-direction:column;gap:7px}
+.field.full{grid-column:1/-1}.field-help{font-size:11px;line-height:1.45;color:var(--muted);margin-top:2px}
+.permission-card{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;border:1px solid #dbeafe;background:#eff6ff;border-radius:12px}
+.permission-card.ok{border-color:#bbf7d0;background:#ecfdf5}
+.permission-card.warn{border-color:#fde68a;background:#fffbeb}
+.permission-card .permission-copy{font-size:12px;line-height:1.4;color:#374151}
+.permission-card .btn{padding:9px 11px;white-space:nowrap}
+.native-geo-wrap{grid-column:1/-1;display:none;padding:10px 12px;border:1px solid #bbf7d0;background:#ecfdf5;border-radius:12px}
+.native-geo-wrap.show{display:block}
+.native-geo-wrap .geo-label{font-size:11px;color:#166534;margin-bottom:7px;font-weight:700}
+.native-geo-wrap geolocation{font-size:16px;font-weight:700}
+label{font-size:12px;font-weight:800;color:#374151}
+input,select,textarea{width:100%;border:1px solid #d1d5db;border-radius:11px;background:white;padding:12px 12px;color:var(--text);outline:none}
+input:focus,select:focus,textarea:focus{border-color:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.12)}
+.input-unit{position:relative}.input-unit input{padding-right:50px}.unit{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:800;color:var(--muted)}
+.location-row{display:flex;gap:8px}.location-row input{flex:1}.location-row button{flex:0 0 auto}
+.form-footer{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+.notice{padding:12px 14px;border-radius:12px;background:#ecfdf5;border:1px solid #bbf7d0;color:#166534;font-size:13px;line-height:1.45;margin-bottom:14px}
+.notice.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.history-wrap{overflow:auto}
+table{border-collapse:collapse;width:100%;min-width:820px}
+th,td{text-align:left;padding:13px 14px;border-bottom:1px solid var(--line);font-size:13px}
+th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;background:#f8fafc;position:sticky;top:0}
+td strong{font-size:14px}
+.pill{display:inline-flex;align-items:center;border-radius:999px;padding:5px 8px;background:#f3f4f6;font-size:11px;font-weight:800}
+.empty-table{padding:40px;text-align:center;color:var(--muted)}
+.analytics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.analytics-grid .stat{background:white;box-shadow:var(--shadow)}
+.chart-card{padding:20px}
+.bar-row{display:grid;grid-template-columns:90px 1fr 70px;gap:10px;align-items:center;margin:12px 0;font-size:12px}
+.bar-track{height:12px;border-radius:999px;background:#e5e7eb;overflow:hidden}
+.bar-fill{height:100%;background:#16a34a;border-radius:999px}
+.settings{padding:20px}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.settings-box{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fafafa}
+.settings-box h3{font-size:15px;margin:0 0 8px}
+.settings-box p{font-size:13px;color:var(--muted);line-height:1.5}
+.footer-note{margin-top:14px;color:var(--muted);font-size:12px;line-height:1.5}
+.mobile-add{display:none;position:fixed;right:18px;bottom:18px;width:58px;height:58px;border-radius:50%;border:none;background:#16a34a;color:white;font-size:30px;box-shadow:0 14px 30px rgba(22,163,74,.32);z-index:30}
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:#111827;color:white;border-radius:12px;padding:12px 15px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:99;max-width:90vw}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.thumb{width:50px;height:40px;object-fit:cover;border-radius:7px;border:1px solid var(--line)}
+small.muted{color:var(--muted)}
+@media(max-width:820px){
+  .hero,.capture-grid{grid-template-columns:1fr}.quick{grid-template-columns:repeat(2,1fr)}
+  .analytics-grid{grid-template-columns:1fr 1fr}.settings-grid{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .topbar-inner{padding:11px 14px}main{padding:16px 12px 88px}
+  .brand small{display:none}.top-actions .text-hide{display:none}
+  .hero-copy{padding:20px}.quick{padding:14px}
+  .form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}
+  .capture-actions{grid-template-columns:1fr}
+  .form-footer{flex-direction:column-reverse}.form-footer .btn{width:100%}
+  .analytics-grid{grid-template-columns:1fr 1fr}
+  .mobile-add{display:block}.toast{bottom:88px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">⛽</div>
+      <div>Fuel Log<small>Private, on-device fill-up tracker</small></div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="exportBtn">⇩ <span class="text-hide">Export</span></button>
+      <button class="icon-btn" id="themeBtn" title="Toggle theme">◐</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="card hero-copy">
+    <div class="eyebrow">Petrol fill-up tracker</div>
+    <h1>Photograph the pump.<br>Log the fill-up.</h1>
+    <p class="subtitle">Take a photo after filling. Fuel Log reads the pump display, captures your current GPS position with permission, and stores your fill-up data, photos and coordinates only on this device.</p>
+  </div>
+  <div class="card quick">
+    <div class="stat"><div class="k">LAST FILL</div><div class="v" id="qLast">—</div></div>
+    <div class="stat"><div class="k">LAST LITRES</div><div class="v" id="qLitres">—</div></div>
+    <div class="stat"><div class="k">AVG €/L</div><div class="v" id="qPrice">—</div></div>
+    <div class="stat"><div class="k">TOTAL SPEND</div><div class="v" id="qSpend">—</div></div>
+  </div>
+</section>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="add">＋ Add fill-up</button>
+  <button class="tab" data-tab="history">History</button>
+  <button class="tab" data-tab="analytics">Insights</button>
+  <button class="tab" data-tab="settings">Settings</button>
+</nav>
+
+<section class="panel active" id="panel-add">
+  <div class="capture-grid">
+    <div class="card capture-card">
+      <div class="capture-head"><h2>Pump photo</h2><span class="pill" id="ocrBadge">Ready</span></div>
+      <div class="camera-zone">
+        <div class="drop" id="drop">
+          <img id="preview" alt="Pump photo preview">
+          <div class="empty-capture" id="emptyCapture">
+            <div class="cam">📷</div>
+            <strong>Take a clear photo of the pump display</strong>
+            <div style="margin-top:7px;font-size:13px">Fill most of the photo with the digital display. Keep the sale, litres and price-per-litre visible.</div>
+          </div>
+        </div>
+        <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
+        <input id="fileInput" type="file" accept="image/*" hidden>
+        <div class="capture-actions">
+          <button class="btn btn-primary" id="cameraBtn">📷 Take photo</button>
+          <button class="btn btn-light" id="uploadBtn">🖼 Choose photo</button>
+        </div>
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-line"><i id="progressBar"></i></div>
+          <div class="progress-text" id="progressText">Preparing OCR…</div>
+        </div>
+        <div class="scan-debug" id="scanDebug">
+          <div class="scan-debug-title">Detected pump display</div>
+          <div class="scan-crops">
+            <div class="scan-crop"><img id="saleCropPreview" alt=""><small>Sale row</small></div>
+            <div class="scan-crop"><img id="litresCropPreview" alt=""><small>Litres row</small></div>
+          </div>
+        </div>
+        <div class="footer-note">OCR runs in your browser. The first scan needs internet access to load the OCR engine; your image is not intentionally uploaded by this app.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="form-head"><h2>Fill-up details</h2><button class="btn btn-light" id="clearBtn">Clear</button></div>
+      <div class="form-body">
+        <div class="notice" id="autoNotice">Take a pump photo and the app will try to populate the fuel values automatically.</div>
+        <form id="fillForm">
+          <div class="form-grid">
+            <div class="field">
+              <label for="dateTime">Date & time</label>
+              <input id="dateTime" type="datetime-local" required>
+            </div>
+            <div class="field">
+              <label for="fuelType">Fuel</label>
+              <select id="fuelType"><option>Unleaded</option><option>Premium Unleaded</option><option>Diesel</option><option>Premium Diesel</option><option>Other</option></select>
+            </div>
+            <div class="field">
+              <label for="sale">Total paid</label>
+              <div class="input-unit"><input id="sale" type="number" step="0.01" min="0" placeholder="47.02" required><span class="unit">€</span></div>
+            </div>
+            <div class="field">
+              <label for="litres">Litres</label>
+              <div class="input-unit"><input id="litres" type="number" step="0.01" min="0" placeholder="24.50" required><span class="unit">L</span></div>
+            </div>
+            <div class="field">
+              <label for="cpl">Pump price</label>
+              <div class="input-unit"><input id="cpl" type="number" step="0.1" min="0" placeholder="191.9"><span class="unit">c/L</span></div>
+            </div>
+            <div class="field">
+              <label for="odometer">Odometer</label>
+              <div class="input-unit"><input id="odometer" type="number" step="1" min="0" placeholder="Optional"><span class="unit">km</span></div>
+            </div>
+            <div class="permission-card" id="permissionCard">
+              <div class="permission-copy" id="permissionText"><strong>Location:</strong> ready to request permission.</div>
+              <button type="button" class="btn btn-light" id="permissionBtn">Allow location</button>
+            </div>
+            <div class="field full">
+              <label for="station">Station / location</label>
+              <div class="location-row"><input id="station" placeholder="Optional station name; GPS stays on-device"><button type="button" class="btn btn-light" id="locateBtn">⌖ Locate</button></div>
+              <div class="field-help" id="locationHelp">Press Locate to request GPS. Coordinates are stored locally and are not sent to a geocoding service.</div>
+            </div>
+            <div class="field">
+              <label for="lat">Latitude</label><input id="lat" readonly placeholder="—">
+            </div>
+            <div class="field">
+              <label for="lon">Longitude</label><input id="lon" readonly placeholder="—">
+            </div>
+            <div class="field full">
+              <label for="notes">Notes</label><textarea id="notes" rows="2" placeholder="Optional notes"></textarea>
+            </div>
+          </div>
+          <div class="form-footer">
+            <button class="btn btn-light" type="button" id="calcBtn">Check values</button>
+            <button class="btn btn-dark" type="submit">Save fill-up</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="panel-history">
+  <div class="card">
+    <div class="section-head"><h2>Fill-up history</h2><button class="btn btn-light" id="importBtn">Import JSON</button></div>
+    <input id="importInput" type="file" accept=".json,application/json" hidden>
+    <div class="history-wrap" id="historyWrap"></div>
+  </div>
+</section>
+
+<section class="panel" id="panel-analytics">
+  <div class="analytics-grid">
+    <div class="stat"><div class="k">FILL-UPS</div><div class="v" id="aCount">0</div></div>
+    <div class="stat"><div class="k">TOTAL LITRES</div><div class="v" id="aLitres">0 L</div></div>
+    <div class="stat"><div class="k">TOTAL SPEND</div><div class="v" id="aSpend">€0</div></div>
+    <div class="stat"><div class="k">AVG PRICE</div><div class="v" id="aPrice">—</div></div>
+  </div>
+  <div class="card chart-card">
+    <div class="section-head" style="padding:0 0 14px;border-bottom:1px solid var(--line)"><h2>Recent fill-ups</h2></div>
+    <div id="bars"></div>
+  </div>
+</section>
+
+<section class="panel" id="panel-settings">
+  <div class="card settings">
+    <div class="settings-grid">
+      <div class="settings-box">
+        <h3>Data storage</h3>
+        <p>Fill-ups and pump photos are stored in this browser using IndexedDB. They are not uploaded to GitHub or a server. Export a backup periodically, especially before changing phones or clearing site data.</p>
+        <button class="btn btn-dark" id="backupBtn">Export backup</button> <button class="btn btn-light" id="installBtn" style="display:none;margin-left:6px">Install app</button>
+      </div>
+      <div class="settings-box">
+        <h3>Location</h3>
+        <p>Location is requested only when you add a fill-up or press Locate. GPS coordinates remain on this device; Fuel Log does not send them to a reverse-geocoding or map service.</p>
+        <button class="btn btn-light" id="testLocationBtn">Test location</button>
+      </div>
+      <div class="settings-box">
+        <h3>OCR</h3>
+        <p>The scanner recognises common Irish/European pump layouts and checks that total ≈ litres × unit price before accepting a value.</p>
+        <button class="btn btn-light" id="rescanBtn">Rescan current photo</button>
+      </div>
+      <div class="settings-box">
+        <h3>Privacy</h3>
+        <p><strong>Personal data stays on this device.</strong> Pump photos, GPS coordinates, fill-up history, odometer values and notes are never sent to GitHub by this app. The public GitHub Pages site contains only the application code.</p>
+      </div>
+      <div class="settings-box">
+        <h3>Reset</h3>
+        <p>Delete all locally stored fill-ups from this browser. Export a backup first if you may need them later.</p>
+        <button class="btn btn-danger" id="resetBtn">Delete all data</button>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+<button class="mobile-add" id="mobileAdd" title="Add fill-up">＋</button>
+<div class="toast" id="toast"></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const LEGACY_KEY='fuelLog.v1';
+const DB_NAME='FuelLogDB';
+const DB_VERSION=1;
+const STORE_NAME='fillups';
+let entries = [];
+let currentImage = '';
+let tesseractPromise = null;
+let dbPromise = null;
+
+function openFuelDB(){
+  if(dbPromise)return dbPromise;
+  dbPromise=new Promise((resolve,reject)=>{
+    const req=indexedDB.open(DB_NAME,DB_VERSION);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(STORE_NAME)){
+        const store=db.createObjectStore(STORE_NAME,{keyPath:'id'});
+        store.createIndex('dateTime','dateTime',{unique:false});
+      }
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+  return dbPromise;
+}
+async function idbGetAll(){
+  const db=await openFuelDB();
+  return await new Promise((resolve,reject)=>{
+    const tx=db.transaction(STORE_NAME,'readonly');
+    const req=tx.objectStore(STORE_NAME).getAll();
+    req.onsuccess=()=>resolve(req.result||[]);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function idbReplaceAll(items){
+  const db=await openFuelDB();
+  return await new Promise((resolve,reject)=>{
+    const tx=db.transaction(STORE_NAME,'readwrite');
+    const store=tx.objectStore(STORE_NAME);
+    store.clear();
+    for(const item of items)store.put(item);
+    tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error);
+    tx.onabort=()=>reject(tx.error);
+  });
+}
+async function loadEntries(){
+  try{
+    entries=await idbGetAll();
+
+    // One-time migration from the earlier localStorage version, if it exists.
+    if(!entries.length){
+      try{
+        const legacy=JSON.parse(localStorage.getItem(LEGACY_KEY)||'[]');
+        if(Array.isArray(legacy)&&legacy.length){
+          entries=legacy;
+          await idbReplaceAll(entries);
+          localStorage.removeItem(LEGACY_KEY);
+          toast(`Migrated ${entries.length} existing fill-ups to private IndexedDB storage`);
+        }
+      }catch(e){}
+    }
+  }catch(e){
+    console.error('IndexedDB load failed',e);
+    entries=[];
+    toast('Local database could not be opened');
+  }
+  renderAll();
+}
+async function save(){
+  try{
+    await idbReplaceAll(entries);
+    renderAll();
+  }catch(e){
+    console.error('IndexedDB save failed',e);
+    toast('Could not save to local database');
+  }
+}
+
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._timer); t._timer=setTimeout(()=>t.classList.remove('show'),2600);
+}
+function nowLocal(){
+  const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+  return d.toISOString().slice(0,16);
+}
+$('#dateTime').value=nowLocal();
+
+function euro(v){return new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR'}).format(Number(v)||0)}
+function dateFmt(v){return new Intl.DateTimeFormat('en-IE',{dateStyle:'medium',timeStyle:'short'}).format(new Date(v))}
+function shortDate(v){return new Intl.DateTimeFormat('en-IE',{day:'2-digit',month:'short'}).format(new Date(v))}
+function esc(v=''){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+function showTab(name){
+  $$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  $$('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+name));
+  if(name==='add') window.scrollTo({top:0,behavior:'smooth'});
+}
+$$('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+$('#mobileAdd').onclick=()=>showTab('add');
+
+function renderAll(){
+  const sorted=[...entries].sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime));
+  const totalSpend=entries.reduce((s,x)=>s+(+x.sale||0),0);
+  const totalL=entries.reduce((s,x)=>s+(+x.litres||0),0);
+  const avgCpl=totalL?totalSpend/totalL*100:0;
+  $('#qLast').textContent=sorted[0]?euro(sorted[0].sale):'—';
+  $('#qLitres').textContent=sorted[0]?`${(+sorted[0].litres).toFixed(2)} L`:'—';
+  $('#qPrice').textContent=avgCpl?`${avgCpl.toFixed(1)}c`:'—';
+  $('#qSpend').textContent=euro(totalSpend);
+  $('#aCount').textContent=entries.length;
+  $('#aLitres').textContent=`${totalL.toFixed(1)} L`;
+  $('#aSpend').textContent=euro(totalSpend);
+  $('#aPrice').textContent=avgCpl?`${avgCpl.toFixed(1)} c/L`:'—';
+  renderHistory(sorted); renderBars(sorted);
+}
+function renderHistory(sorted){
+  const el=$('#historyWrap');
+  if(!sorted.length){el.innerHTML='<div class="empty-table">No fill-ups yet. Add your first pump photo.</div>';return}
+  el.innerHTML=`<table><thead><tr><th>Photo</th><th>Date</th><th>Station</th><th>Fuel</th><th>Litres</th><th>Price</th><th>Total</th><th>Odometer</th><th></th></tr></thead>
+  <tbody>${sorted.map(x=>`<tr>
+    <td>${x.image?`<img class="thumb" src="${x.image}" alt="">`:'—'}</td>
+    <td><strong>${esc(shortDate(x.dateTime))}</strong><br><small class="muted">${esc(new Date(x.dateTime).toLocaleTimeString('en-IE',{hour:'2-digit',minute:'2-digit'}))}</small></td>
+    <td>${esc(x.station||'—')}</td><td><span class="pill">${esc(x.fuelType)}</span></td>
+    <td>${(+x.litres).toFixed(2)} L</td><td>${(+x.cpl||(+x.sale/+x.litres*100)).toFixed(1)} c/L</td>
+    <td><strong>${euro(x.sale)}</strong></td><td>${x.odometer?esc(x.odometer)+' km':'—'}</td>
+    <td><button class="btn btn-danger" style="padding:7px 9px" onclick="removeEntry('${x.id}')">Delete</button></td>
+  </tr>`).join('')}</tbody></table>`;
+}
+window.removeEntry=async id=>{if(confirm('Delete this fill-up?')){entries=entries.filter(x=>x.id!==id);await save()}};
+function renderBars(sorted){
+  const vals=sorted.slice(0,8).reverse();
+  const max=Math.max(1,...vals.map(x=>+x.sale||0));
+  $('#bars').innerHTML=vals.length?vals.map(x=>`<div class="bar-row"><div>${esc(shortDate(x.dateTime))}</div><div class="bar-track"><div class="bar-fill" style="width:${(+x.sale/max*100).toFixed(1)}%"></div></div><strong>${euro(x.sale)}</strong></div>`).join(''):'<div class="empty-table">Insights will appear after you save fill-ups.</div>';
+}
+
+function clearForm(keepDate=true){
+  $('#fillForm').reset(); $('#dateTime').value=keepDate?nowLocal():'';
+  $('#lat').value='';$('#lon').value=''; currentImage='';
+  $('#preview').removeAttribute('src');$('#drop').classList.remove('has-image');$('#emptyCapture').style.display='';
+  $('#ocrBadge').textContent='Ready';$('#autoNotice').className='notice';$('#autoNotice').textContent='Take a pump photo and the app will try to populate the fuel values automatically.';
+  $('#progressWrap').classList.remove('show');$('#scanDebug').classList.remove('show');
+}
+$('#clearBtn').onclick=()=>clearForm();
+
+function setImage(file){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=async()=>{
+    currentImage=r.result;
+    $('#preview').src=currentImage;
+    $('#drop').classList.add('has-image');
+    $('#emptyCapture').style.display='none';
+
+    // A fill-up photo is the natural point at which location becomes useful.
+    // If permission is still "prompt", this calls getCurrentPosition so the
+    // browser can display its own permission dialog.
+    if(!$('#lat').value) requestLocationForFill(false);
+    runOCR();
+  };
+  r.readAsDataURL(file);
+}
+$('#cameraBtn').onclick=()=>$('#cameraInput').click();
+$('#uploadBtn').onclick=()=>$('#fileInput').click();
+$('#cameraInput').onchange=e=>setImage(e.target.files[0]);
+$('#fileInput').onchange=e=>setImage(e.target.files[0]);
+
+function loadTesseract(){
+  if(window.Tesseract)return Promise.resolve();
+  if(tesseractPromise)return tesseractPromise;
+  tesseractPromise=new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload=resolve;s.onerror=()=>reject(new Error('Could not load OCR engine'));
+    document.head.appendChild(s);
+  });
+  return tesseractPromise;
+}
+
+function loadImage(src){
+  return new Promise((resolve,reject)=>{
+    const im=new Image();
+    im.onload=()=>resolve(im);
+    im.onerror=reject;
+    im.src=src;
+  });
+}
+function detectPumpDisplayRect(img){
+  // Find a large, fairly uniform grey/blue LCD rectangle. Work on a reduced
+  // canvas so connected-component detection stays quick on a phone.
+  const scale=Math.min(1,600/img.width);
+  const w=Math.max(1,Math.round(img.width*scale));
+  const h=Math.max(1,Math.round(img.height*scale));
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx=c.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(img,0,0,w,h);
+  const d=ctx.getImageData(0,0,w,h).data;
+  const mask=new Uint8Array(w*h);
+
+  for(let i=0,p=0;i<d.length;i+=4,p++){
+    const r=d[i],g=d[i+1],b=d[i+2];
+    const mx=Math.max(r,g,b), mn=Math.min(r,g,b), chroma=mx-mn;
+    // LCD backgrounds on common Irish/European pumps are usually mid-value,
+    // low-chroma grey/blue. This intentionally excludes the white pump casing.
+    if(mx>65 && mx<225 && chroma<95) mask[p]=1;
+  }
+
+  const seen=new Uint8Array(w*h);
+  const stack=[];
+  let best=null;
+  const dirs=[-1,1,-w,w];
+
+  for(let p=0;p<mask.length;p++){
+    if(!mask[p]||seen[p])continue;
+    stack.length=0; stack.push(p); seen[p]=1;
+    let area=0,minX=w,maxX=0,minY=h,maxY=0;
+    while(stack.length){
+      const q=stack.pop(), y=(q/w)|0, x=q-y*w;
+      area++;
+      if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;
+      // Explicit neighbours avoid row wrapping on +/-1.
+      if(x>0){const n=q-1;if(mask[n]&&!seen[n]){seen[n]=1;stack.push(n)}}
+      if(x<w-1){const n=q+1;if(mask[n]&&!seen[n]){seen[n]=1;stack.push(n)}}
+      if(y>0){const n=q-w;if(mask[n]&&!seen[n]){seen[n]=1;stack.push(n)}}
+      if(y<h-1){const n=q+w;if(mask[n]&&!seen[n]){seen[n]=1;stack.push(n)}}
+    }
+    const bw=maxX-minX+1,bh=maxY-minY+1;
+    const frac=area/(w*h), ar=bw/Math.max(1,bh), fill=area/(bw*bh);
+    const cx=(minX+maxX)/2/w, cy=(minY+maxY)/2/h;
+    if(frac>.010 && frac<.22 && ar>1.25 && ar<4.4 && fill>.36 && cx>.38 && cy<.68){
+      // The transaction LCD is normally a large landscape component in the
+      // upper-right/central area. Favour size and a roughly 1.4–2.4 aspect.
+      const arBonus=1/(1+Math.abs(ar-1.65));
+      const posBonus=(cx>.5?1.25:1)*(cy<.55?1.15:1);
+      const score=area*fill*(1+arBonus)*posBonus;
+      if(!best||score>best.score)best={x:minX,y:minY,w:bw,h:bh,score};
+    }
+  }
+  if(!best)return null;
+  const bx=best.x/scale, by=best.y/scale, bw=best.w/scale, bh=best.h/scale;
+  // The connected grey component often starts ~10–20% below the true LCD top.
+  // Expand it so the entire upper transaction row is retained.
+  const ex=bw*.025, top=bh*.18, bottom=bh*.055;
+  return {
+    x:Math.max(0,bx-ex),
+    y:Math.max(0,by-top),
+    w:Math.min(img.width-Math.max(0,bx-ex),bw+ex*2),
+    h:Math.min(img.height-Math.max(0,by-top),bh+top+bottom)
+  };
+}
+function cropEnhancedDataURL(img,rect,contrast=2.0,scaleUp=3,threshold=null){
+  const sx=Math.max(0,Math.floor(rect.x)), sy=Math.max(0,Math.floor(rect.y));
+  const sw=Math.max(2,Math.min(img.width-sx,Math.floor(rect.w)));
+  const sh=Math.max(2,Math.min(img.height-sy,Math.floor(rect.h)));
+  const base=document.createElement('canvas'); base.width=sw; base.height=sh;
+  const bctx=base.getContext('2d',{willReadFrequently:true});
+  bctx.drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
+  const id=bctx.getImageData(0,0,sw,sh), a=id.data;
+  for(let i=0;i<a.length;i+=4){
+    const g=.299*a[i]+.587*a[i+1]+.114*a[i+2];
+    let v=Math.max(0,Math.min(255,(g-128)*contrast+128));
+    if(threshold!==null) v=v<threshold?0:255;
+    a[i]=a[i+1]=a[i+2]=v;
+  }
+  bctx.putImageData(id,0,0);
+  const out=document.createElement('canvas');
+  out.width=sw*scaleUp;out.height=sh*scaleUp;
+  const octx=out.getContext('2d');
+  octx.imageSmoothingEnabled=true;
+  octx.drawImage(base,0,0,out.width,out.height);
+  return out.toDataURL('image/png');
+}
+function decimalCandidatesFromDigitText(text,min,max){
+  const toks=(String(text||'').replace(/,/g,'.').match(/\d+(?:\.\d+)?/g)||[]);
+  const vals=[];
+  for(const tok of toks){
+    const n=Number(tok);
+    if(!Number.isFinite(n))continue;
+    const add=v=>{if(v>=min&&v<=max)vals.push(+v.toFixed(3))};
+    if(tok.includes('.')){
+      add(n);
+    }else{
+      add(n);
+      // Common seven-segment OCR failure: decimal point disappears.
+      add(n/10); add(n/100); add(n/1000);
+    }
+  }
+  return uniqNums(vals);
+}
+async function recognizeNumericCrop(img,rect,min,max,previewEl){
+  const worker=await getDigitWorker();
+  const variants=[
+    cropEnhancedDataURL(img,rect,1.8,4,null),
+    cropEnhancedDataURL(img,rect,2.8,4,null),
+    cropEnhancedDataURL(img,rect,2.2,4,145),
+    cropEnhancedDataURL(img,rect,2.2,4,165)
+  ];
+  if(previewEl)previewEl.src=variants[0];
+  const all=[];
+  const raw=[];
+  for(const v of variants){
+    const ret=await worker.recognize(v);
+    const t=(ret.data&&ret.data.text)||'';
+    raw.push(t.trim());
+    all.push(...decimalCandidatesFromDigitText(t,min,max));
+  }
+  return {candidates:uniqNums(all),raw};
+}
+function chooseSaleLitresPair(sales,litres){
+  let best=null;
+  for(const s of sales){
+    for(const l of litres){
+      if(!s||!l)continue;
+      const cpl=s/l*100;
+      if(cpl<120||cpl>260)continue;
+      let score=0;
+      // Prefer realistic Irish pump transaction ranges and two-decimal style values.
+      if(s<10)score+=12;
+      if(l<5)score+=8;
+      if(s>200)score+=4;
+      if(l>100)score+=5;
+      // Only use price as a plausibility constraint; do not bias the result
+      // toward one assumed petrol price.
+      if(cpl<140||cpl>230)score+=4;
+      if(!best||score<best.score)best={sale:s,litres:l,cpl,score};
+    }
+  }
+  return best;
+}
+function makeDisplayRowRects(display){
+  // Inset the black LCD border and split between the two seven-segment rows.
+  return {
+    sale:{
+      x:display.x+display.w*.045,
+      y:display.y+display.h*.075,
+      w:display.w*.91,
+      h:display.h*.405
+    },
+    litres:{
+      x:display.x+display.w*.045,
+      y:display.y+display.h*.49,
+      w:display.w*.91,
+      h:display.h*.405
+    }
+  };
+}
+function litreCandidatesFromDigitText(text){
+  const toks=(String(text||'').replace(/,/g,'.').match(/\d+(?:\.\d+)?/g)||[]);
+  const vals=[];
+  for(const tok of toks){
+    const n=Number(tok);
+    if(!Number.isFinite(n))continue;
+    if(tok.includes('.')){
+      if(n>=2&&n<=150)vals.push(n);
+    }else{
+      const len=tok.length;
+      // LCD OCR frequently drops the decimal point and/or final zero:
+      // 2450 -> 24.50, 245 -> 24.5.
+      if(len>=3&&len<=5){
+        for(const div of [10,100,1000]){
+          const v=n/div;
+          if(v>=2&&v<=150)vals.push(v);
+        }
+      }
+      if(n>=2&&n<=150)vals.push(n);
+    }
+  }
+  return uniqNums(vals);
+}
+function chooseLitresCandidate(candidates,sale,cpl){
+  const c=candidates.filter(v=>v>=2&&v<=150&&Math.abs(v-5)>.01);
+  if(!c.length)return null;
+  const derived=(sale&&cpl)?sale*100/cpl:null;
+  if(derived && derived>=2 && derived<=150){
+    c.sort((a,b)=>Math.abs(a-derived)-Math.abs(b-derived));
+    if(Math.abs(c[0]-derived)<=Math.max(.8,derived*.08)) return +derived.toFixed(2);
+  }
+  // Normal passenger-car fills: prefer plausible two-digit litre values over
+  // tiny signage numbers or very large OCR artefacts.
+  c.sort((a,b)=>{
+    const sa=(a>=10&&a<=80?0:5)+Math.abs(a-30)/100;
+    const sb=(b>=10&&b<=80?0:5)+Math.abs(b-30)/100;
+    return sa-sb;
+  });
+  return +c[0].toFixed(2);
+}
+async function scanMainPumpDisplay(img){
+  const display=detectPumpDisplayRect(img);
+  if(!display)return {displayFound:false,sales:[],litres:[]};
+
+  const rows=makeDisplayRowRects(display);
+  $('#scanDebug').classList.add('show');
+
+  $('#progressText').textContent='Reading sale row…';
+  const saleRead=await recognizeNumericCrop(img,rows.sale,5,500,$('#saleCropPreview'));
+
+  $('#progressText').textContent='Reading litres row…';
+  const litreRead=await recognizeNumericCrop(img,rows.litres,2,150,$('#litresCropPreview'));
+
+  const pair=chooseSaleLitresPair(saleRead.candidates,litreRead.candidates);
+  return {
+    displayFound:true,
+    display,
+    rows,
+    sales:saleRead.candidates,
+    litres:litreRead.candidates,
+    saleRaw:saleRead.raw,
+    litreRaw:litreRead.raw,
+    pair
+  };
+}
+let digitWorkerPromise=null;
+async function getDigitWorker(){
+  if(digitWorkerPromise)return digitWorkerPromise;
+  digitWorkerPromise=(async()=>{
+    await loadTesseract();
+
+    const logger=m=>{
+      if(m.status==='recognizing text' && $('#progressWrap').classList.contains('show')){
+        const pct=35+Math.round((m.progress||0)*55);
+        $('#progressBar').style.width=Math.min(94,pct)+'%';
+        $('#progressText').textContent='Reading seven-segment LCD…';
+      }
+    };
+
+    let worker;
+    try{
+      // Purpose-trained seven-segment model. It is substantially better suited
+      // to petrol-pump LCD digits than standard English OCR.
+      worker=await Tesseract.createWorker('7seg',1,{
+        langPath:'https://cdn.jsdelivr.net/gh/Shreeshrii/tessdata_ssd@master',
+        gzip:false,
+        logger
+      });
+      worker._fuelLogModel='7seg';
+    }catch(err){
+      console.warn('Seven-segment model unavailable; falling back to eng.',err);
+      worker=await Tesseract.createWorker('eng',1,{logger});
+      worker._fuelLogModel='eng';
+    }
+
+    const psm=(Tesseract.PSM&&Tesseract.PSM.SINGLE_LINE)?Tesseract.PSM.SINGLE_LINE:'7';
+    await worker.setParameters({
+      tessedit_char_whitelist:'0123456789.,',
+      tessedit_pageseg_mode:psm,
+      preserve_interword_spaces:'0'
+    });
+    return worker;
+  })();
+  return digitWorkerPromise;
+}
+
+function activeDigitModelName(){
+  if(!digitWorkerPromise)return '';
+  return '';
+}
+async function runOCR(){
+  if(!currentImage){toast('Take or choose a photo first');return}
+  $('#progressWrap').classList.add('show');
+  $('#scanDebug').classList.remove('show');
+  $('#ocrBadge').textContent='Scanning…';
+  $('#progressBar').style.width='5%';
+  $('#progressText').textContent='Detecting pump LCD…';
+
+  try{
+    await loadTesseract();
+    const img=await loadImage(currentImage);
+
+    // IMPORTANT: We deliberately do NOT use whole-photo OCR to populate fuel
+    // values. Printed text such as "Minimum Delivery 5 Litres" and pump labels
+    // are too easy for OCR to confuse with the actual transaction.
+    const scan=await scanMainPumpDisplay(img);
+
+    $('#sale').value='';
+    $('#litres').value='';
+    $('#cpl').value='';
+
+    if(!scan.displayFound){
+      $('#ocrBadge').textContent='LCD not found';
+      $('#autoNotice').className='notice warn';
+      $('#autoNotice').textContent='I could not isolate the large two-row LCD display. Retake the photo with the transaction display reasonably straight and clearly visible.';
+      return;
+    }
+
+    let chosen=scan.pair;
+
+    // If OCR produced only one side cleanly, do not invent the other value.
+    // A valid pair must imply a believable petrol pump unit price.
+    if(chosen){
+      $('#sale').value=(+chosen.sale).toFixed(2);
+      $('#litres').value=(+chosen.litres).toFixed(2);
+      $('#cpl').value=(+chosen.cpl).toFixed(1);
+
+      $('#ocrBadge').textContent='LCD read';
+      $('#autoNotice').className='notice';
+      const model=(await getDigitWorker())._fuelLogModel==='7seg'?'seven-segment OCR':'fallback OCR';
+      $('#autoNotice').textContent=
+        `LCD scan (${model}) found ${euro(chosen.sale)}, ${(+chosen.litres).toFixed(2)} L and calculates ${(+chosen.cpl).toFixed(1)} c/L. `+
+        `Sale candidates: ${scan.sales.map(v=>Number(v).toFixed(2)).join(', ')||'none'}; `+
+        `litres candidates: ${scan.litres.map(v=>Number(v).toFixed(2)).join(', ')||'none'}. Please visually confirm before saving.`;
+      validateMath(false);
+    }else{
+      // Show any row values found but do not cross-contaminate them with
+      // arbitrary numbers elsewhere on the photograph.
+      const s=scan.sales.find(v=>v>=5&&v<=300);
+      const l=scan.litres.find(v=>v>=2&&v<=100);
+      if(s)$('#sale').value=(+s).toFixed(2);
+      if(l)$('#litres').value=(+l).toFixed(2);
+
+      $('#ocrBadge').textContent='Review';
+      $('#autoNotice').className='notice warn';
+      $('#autoNotice').textContent=
+        `The LCD was isolated, but the two rows did not form a believable sale/litres pair. `+
+        `Sale row candidates: ${scan.sales.map(v=>Number(v).toFixed(2)).join(', ')||'none'}; `+
+        `litres row candidates: ${scan.litres.map(v=>Number(v).toFixed(2)).join(', ')||'none'}. `+
+        `The app will not use small printed numbers elsewhere on the pump.`;
+    }
+  }catch(e){
+    console.error(e);
+    $('#ocrBadge').textContent='OCR unavailable';
+    $('#autoNotice').className='notice warn';
+    $('#autoNotice').textContent='Automatic LCD OCR could not complete. You can still enter the values manually.';
+  }finally{
+    $('#progressBar').style.width='100%';
+    setTimeout(()=>$('#progressWrap').classList.remove('show'),800);
+  }
+}
+$('#rescanBtn').onclick=runOCR;
+
+function validateMath(show=true){
+  const s=+$('#sale').value,l=+$('#litres').value,p=+$('#cpl').value;
+  if(!s||!l){if(show)toast('Enter the total and litres first');return false}
+  const inferred=s/l*100;
+  if(!p){$('#cpl').value=inferred.toFixed(1);if(show)toast(`Calculated pump price: ${inferred.toFixed(1)} c/L`);return true}
+  const diff=Math.abs(s-l*p/100);
+  if(diff>Math.max(.15,s*.01)){if(show)toast(`Values may not match — calculated price is ${inferred.toFixed(1)} c/L`);return false}
+  if(show)toast('Values are internally consistent');
+  return true;
+}
+$('#calcBtn').onclick=()=>validateMath(true);
+['sale','litres'].forEach(id=>$('#'+id).addEventListener('change',()=>{if($('#sale').value&&$('#litres').value&&!$('#cpl').value)validateMath(false)}));
+
+function locationMessage(msg, warn=false){
+  const el=$('#locationHelp');
+  if(el){el.textContent=msg;el.style.color=warn?'#b45309':'';}
+}
+function permissionUI(state,message){
+  const card=$('#permissionCard'),txt=$('#permissionText'),btn=$('#permissionBtn');
+  if(!card||!txt||!btn)return;
+  card.classList.remove('ok','warn');
+  if(state==='granted'){card.classList.add('ok');btn.textContent='Refresh location'}
+  else if(state==='denied'||state==='blocked'||state==='insecure'){card.classList.add('warn');btn.textContent='Request location'}
+  else btn.textContent='Allow location';
+  txt.innerHTML=message;
+}
+async function geolocationPermissionState(){
+  try{
+    if(navigator.permissions&&navigator.permissions.query){
+      const s=await navigator.permissions.query({name:'geolocation'});
+      return s.state;
+    }
+  }catch(e){}
+  return 'unknown';
+}
+async function refreshPermissionUI(){
+  if(!window.isSecureContext){
+    permissionUI('insecure','<strong>Location:</strong> HTTPS is required. Once this app is opened from GitHub Pages, location can be requested normally.');
+    return;
+  }
+  if(!navigator.geolocation){
+    permissionUI('blocked','<strong>Location:</strong> this browser does not expose GPS.');
+    return;
+  }
+  const s=await geolocationPermissionState();
+  if(s==='granted'){
+    permissionUI('granted','<strong>Location:</strong> permission is already granted. Coordinates are kept locally on this device.');
+  }else if(s==='denied'){
+    permissionUI('denied','<strong>Location:</strong> permission is currently blocked for this site. Re-enable Location in the browser site permissions, then press Request location.');
+  }else{
+    permissionUI('prompt','<strong>Location:</strong> press <b>Allow location</b>. Your browser should show its native permission prompt.');
+  }
+}
+async function applyPosition(pos,showToast=true){
+  if(!pos||!pos.coords)return false;
+  const latitude=Number(pos.coords.latitude), longitude=Number(pos.coords.longitude);
+  $('#lat').value=latitude.toFixed(6);
+  $('#lon').value=longitude.toFixed(6);
+  $('#locateBtn').textContent='✓ Located';
+
+  // Do not contact any reverse-geocoding/map service. Keep the precise
+  // coordinates in the local record only.
+  if(!$('#station').value.trim())$('#station').value='GPS location';
+
+  permissionUI('granted','<strong>Location:</strong> captured. The coordinates remain only on this device.');
+  locationMessage(`GPS captured${pos.coords.accuracy?` to about ${Math.round(pos.coords.accuracy)} m accuracy`:''}. No location lookup was sent to an external service.`);
+  if(showToast)toast('Private GPS location captured');
+  return true;
+}
+async function requestLocationForFill(showToast=true){
+  return locate(showToast);
+}
+async function locate(showToast=true){
+  if(!window.isSecureContext){
+    const msg='Location requires HTTPS. Open the published GitHub Pages version rather than the downloaded HTML file.';
+    locationMessage(msg,true);
+    permissionUI('insecure','<strong>Location:</strong> '+msg);
+    if(showToast)toast('Open the GitHub Pages version for GPS');
+    return false;
+  }
+  if(!navigator.geolocation){
+    const msg='This browser does not support geolocation.';
+    locationMessage(msg,true);
+    permissionUI('blocked','<strong>Location:</strong> '+msg);
+    if(showToast)toast(msg);
+    return false;
+  }
+
+  $('#locateBtn').textContent='Locating…';
+  locationMessage('Requesting your current position. If asked, choose Allow.');
+
+  return await new Promise(resolve=>{
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      await applyPosition(pos,showToast);
+      resolve(true);
+    },async err=>{
+      $('#locateBtn').textContent='⌖ Locate';
+      let msg='Location could not be obtained.';
+      if(err&&err.code===1){
+        msg='Location permission was denied. In Chrome, open this site’s permissions, allow Location, then press Request location again.';
+      }else if(err&&err.code===2){
+        msg='The phone could not determine its current position. Make sure Android Location is switched on.';
+      }else if(err&&err.code===3){
+        msg='The location request timed out. Try again with Android Location enabled.';
+      }
+      locationMessage(msg,true);
+      const state=await geolocationPermissionState();
+      permissionUI(state==='granted'?'granted':'denied','<strong>Location:</strong> '+msg);
+      if(showToast)toast(msg);
+      resolve(false);
+    },{enableHighAccuracy:true,timeout:15000,maximumAge:5000});
+  });
+}
+$('#locateBtn').onclick=()=>locate(true);
+$('#testLocationBtn').onclick=()=>locate(true);
+$('#permissionBtn').onclick=()=>locate(true);
+
+$('#fillForm').onsubmit=async e=>{
+  e.preventDefault();
+  const sale=+$('#sale').value,litres=+$('#litres').value;
+  let cpl=+$('#cpl').value;
+  if(!cpl)cpl=sale/litres*100;
+  const entry={
+    id:(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)),
+    dateTime:$('#dateTime').value,fuelType:$('#fuelType').value,sale:+sale.toFixed(2),litres:+litres.toFixed(2),
+    cpl:+cpl.toFixed(1),odometer:$('#odometer').value?+$('#odometer').value:null,station:$('#station').value.trim(),
+    lat:$('#lat').value?+$('#lat').value:null,lon:$('#lon').value?+$('#lon').value:null,notes:$('#notes').value.trim(),image:currentImage||''
+  };
+  entries.push(entry);await save();toast('Fill-up saved privately on this device');clearForm();showTab('history');
+};
+
+function exportData(){
+  const payload={app:'Fuel Log',version:'2.0',privacy:'on-device',exportedAt:new Date().toISOString(),entries};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`fuel-log-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);
+}
+$('#exportBtn').onclick=exportData;$('#backupBtn').onclick=exportData;
+$('#importBtn').onclick=()=>$('#importInput').click();
+$('#importInput').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+    const j=JSON.parse(await f.text());const arr=Array.isArray(j)?j:j.entries;
+    if(!Array.isArray(arr))throw new Error();
+    entries=arr;await save();toast(`Imported ${arr.length} fill-ups`);
+  }catch{toast('That backup file could not be imported')}
+};
+$('#resetBtn').onclick=async()=>{if(confirm('Delete every saved fill-up from this browser?')){entries=[];await save();toast('All local data deleted')}};
+
+$('#themeBtn').onclick=()=>{
+  document.body.classList.toggle('dark');
+  if(document.body.classList.contains('dark')){
+    document.documentElement.style.setProperty('--bg','#0b1220');document.documentElement.style.setProperty('--panel','#111827');
+    document.documentElement.style.setProperty('--panel2','#172033');document.documentElement.style.setProperty('--text','#f8fafc');
+    document.documentElement.style.setProperty('--muted','#94a3b8');document.documentElement.style.setProperty('--line','#263244');
+  }else{
+    ['--bg','--panel','--panel2','--text','--muted','--line'].forEach(x=>document.documentElement.style.removeProperty(x));
+  }
+};
+
+let deferredInstallPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredInstallPrompt=e;
+  const b=$('#installBtn');
+  if(b)b.style.display='';
+});
+const installBtn=$('#installBtn');
+if(installBtn)installBtn.onclick=async()=>{
+  if(!deferredInstallPrompt){
+    toast('Use your browser menu and choose Add to Home screen / Install app');
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt=null;
+  installBtn.style.display='none';
+};
+
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('Service worker registration failed',err));
+  });
+}
+
+loadEntries();
+refreshPermissionUI();
+
+</script>
+</body>
+</html>
