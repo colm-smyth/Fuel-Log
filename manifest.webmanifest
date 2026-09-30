@@ -1,5 +1,5 @@
 {
-  "name": "Fuel Log",
+  "name": "Fuel Log \u2013 Private Petrol Tracker",
   "short_name": "Fuel Log",
   "description": "Private, on-device petrol fill-up tracker with pump OCR and GPS capture.",
   "start_url": "./",
@@ -13,13 +13,40 @@
       "src": "./icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "./icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "id": "./",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "prefer_related_applications": false,
+  "categories": [
+    "utilities",
+    "productivity"
+  ],
+  "lang": "en-IE",
+  "dir": "ltr",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
 }

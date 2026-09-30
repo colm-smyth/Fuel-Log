@@ -305,6 +305,11 @@ small.muted{color:var(--muted)}
         <button class="btn btn-light" id="rescanBtn">Rescan current photo</button>
       </div>
       <div class="settings-box">
+        <h3>Install / PWA status</h3>
+        <p id="pwaStatus">Checking whether this browser can install Fuel Log…</p>
+        <button class="btn btn-light" id="installHelpBtn">Check install status</button>
+      </div>
+      <div class="settings-box">
         <h3>Privacy</h3>
         <p><strong>Personal data stays on this device.</strong> Pump photos, GPS coordinates, fill-up history, odometer values and notes are never sent to GitHub by this app. The public GitHub Pages site contains only the application code.</p>
       </div>
@@ -332,6 +337,12 @@ let entries = [];
 let currentImage = '';
 let tesseractPromise = null;
 let dbPromise = null;
+
+// OCR lifecycle state. Saving now waits for an active scan to finish, and
+// stale OCR callbacks are ignored once the form has been saved/cleared.
+let ocrRunId = 0;
+let ocrBusy = false;
+let currentOcrPromise = Promise.resolve();
 
 function openFuelDB(){
   if(dbPromise)return dbPromise;
@@ -462,6 +473,10 @@ function renderBars(sorted){
 }
 
 function clearForm(keepDate=true){
+  // Invalidate any in-flight scan before resetting the UI.
+  ocrRunId++;
+  ocrBusy=false;
+  currentOcrPromise=Promise.resolve();
   $('#fillForm').reset(); $('#dateTime').value=keepDate?nowLocal():'';
   $('#lat').value='';$('#lon').value=''; currentImage='';
   $('#preview').removeAttribute('src');$('#drop').classList.remove('has-image');$('#emptyCapture').style.display='';
@@ -483,7 +498,7 @@ function setImage(file){
     // If permission is still "prompt", this calls getCurrentPosition so the
     // browser can display its own permission dialog.
     if(!$('#lat').value) requestLocationForFill(false);
-    runOCR();
+    currentOcrPromise=runOCR();
   };
   r.readAsDataURL(file);
 }
@@ -782,53 +797,72 @@ function activeDigitModelName(){
   return '';
 }
 async function runOCR(){
-  if(!currentImage){toast('Take or choose a photo first');return}
-  $('#progressWrap').classList.add('show');
-  $('#scanDebug').classList.remove('show');
-  $('#ocrBadge').textContent='Scanning…';
-  $('#progressBar').style.width='5%';
-  $('#progressText').textContent='Detecting pump LCD…';
+  if(!currentImage){toast('Take or choose a photo first');return false}
+
+  const myRun=++ocrRunId;
+  const sourceImage=currentImage;
+  ocrBusy=true;
+
+  const stillCurrent=()=>myRun===ocrRunId && currentImage===sourceImage;
+  const ui=(fn)=>{if(stillCurrent())fn()};
+
+  ui(()=>{
+    $('#progressWrap').classList.add('show');
+    $('#scanDebug').classList.remove('show');
+    $('#ocrBadge').textContent='Scanning…';
+    $('#progressBar').style.width='5%';
+    $('#progressText').textContent='Detecting pump LCD…';
+  });
 
   try{
     await loadTesseract();
-    const img=await loadImage(currentImage);
+    if(!stillCurrent())return false;
 
-    // IMPORTANT: We deliberately do NOT use whole-photo OCR to populate fuel
-    // values. Printed text such as "Minimum Delivery 5 Litres" and pump labels
-    // are too easy for OCR to confuse with the actual transaction.
+    const img=await loadImage(sourceImage);
+    if(!stillCurrent())return false;
+
     const scan=await scanMainPumpDisplay(img);
+    if(!stillCurrent())return false;
 
-    $('#sale').value='';
-    $('#litres').value='';
-    $('#cpl').value='';
+    ui(()=>{
+      $('#sale').value='';
+      $('#litres').value='';
+      $('#cpl').value='';
+    });
 
     if(!scan.displayFound){
-      $('#ocrBadge').textContent='LCD not found';
-      $('#autoNotice').className='notice warn';
-      $('#autoNotice').textContent='I could not isolate the large two-row LCD display. Retake the photo with the transaction display reasonably straight and clearly visible.';
-      return;
+      ui(()=>{
+        $('#ocrBadge').textContent='LCD not found';
+        $('#autoNotice').className='notice warn';
+        $('#autoNotice').textContent='I could not isolate the large two-row LCD display. Retake the photo with the transaction display reasonably straight and clearly visible.';
+      });
+      return false;
     }
 
-    let chosen=scan.pair;
+    const chosen=scan.pair;
 
-    // If OCR produced only one side cleanly, do not invent the other value.
-    // A valid pair must imply a believable petrol pump unit price.
     if(chosen){
-      $('#sale').value=(+chosen.sale).toFixed(2);
-      $('#litres').value=(+chosen.litres).toFixed(2);
-      $('#cpl').value=(+chosen.cpl).toFixed(1);
+      const worker=await getDigitWorker();
+      if(!stillCurrent())return false;
+      const model=worker._fuelLogModel==='7seg'?'seven-segment OCR':'fallback OCR';
 
-      $('#ocrBadge').textContent='LCD read';
-      $('#autoNotice').className='notice';
-      const model=(await getDigitWorker())._fuelLogModel==='7seg'?'seven-segment OCR':'fallback OCR';
-      $('#autoNotice').textContent=
-        `LCD scan (${model}) found ${euro(chosen.sale)}, ${(+chosen.litres).toFixed(2)} L and calculates ${(+chosen.cpl).toFixed(1)} c/L. `+
-        `Sale candidates: ${scan.sales.map(v=>Number(v).toFixed(2)).join(', ')||'none'}; `+
-        `litres candidates: ${scan.litres.map(v=>Number(v).toFixed(2)).join(', ')||'none'}. Please visually confirm before saving.`;
-      validateMath(false);
-    }else{
-      // Show any row values found but do not cross-contaminate them with
-      // arbitrary numbers elsewhere on the photograph.
+      ui(()=>{
+        $('#sale').value=(+chosen.sale).toFixed(2);
+        $('#litres').value=(+chosen.litres).toFixed(2);
+        $('#cpl').value=(+chosen.cpl).toFixed(1);
+
+        $('#ocrBadge').textContent='LCD read';
+        $('#autoNotice').className='notice';
+        $('#autoNotice').textContent=
+          `LCD scan (${model}) found ${euro(chosen.sale)}, ${(+chosen.litres).toFixed(2)} L and calculates ${(+chosen.cpl).toFixed(1)} c/L. `+
+          `Sale candidates: ${scan.sales.map(v=>Number(v).toFixed(2)).join(', ')||'none'}; `+
+          `litres candidates: ${scan.litres.map(v=>Number(v).toFixed(2)).join(', ')||'none'}. Please visually confirm before saving.`;
+        validateMath(false);
+      });
+      return true;
+    }
+
+    ui(()=>{
       const s=scan.sales.find(v=>v>=5&&v<=300);
       const l=scan.litres.find(v=>v>=2&&v<=100);
       if(s)$('#sale').value=(+s).toFixed(2);
@@ -841,18 +875,30 @@ async function runOCR(){
         `Sale row candidates: ${scan.sales.map(v=>Number(v).toFixed(2)).join(', ')||'none'}; `+
         `litres row candidates: ${scan.litres.map(v=>Number(v).toFixed(2)).join(', ')||'none'}. `+
         `The app will not use small printed numbers elsewhere on the pump.`;
-    }
+    });
+    return false;
+
   }catch(e){
     console.error(e);
-    $('#ocrBadge').textContent='OCR unavailable';
-    $('#autoNotice').className='notice warn';
-    $('#autoNotice').textContent='Automatic LCD OCR could not complete. You can still enter the values manually.';
+    // Do not allow a stale scan to overwrite the UI after the user has saved
+    // the fill-up and the form has been cleared.
+    ui(()=>{
+      $('#ocrBadge').textContent='OCR unavailable';
+      $('#autoNotice').className='notice warn';
+      $('#autoNotice').textContent='Automatic LCD OCR could not complete. You can still enter the values manually.';
+    });
+    return false;
   }finally{
-    $('#progressBar').style.width='100%';
-    setTimeout(()=>$('#progressWrap').classList.remove('show'),800);
+    if(stillCurrent()){
+      ocrBusy=false;
+      $('#progressBar').style.width='100%';
+      setTimeout(()=>{
+        if(myRun===ocrRunId)$('#progressWrap').classList.remove('show');
+      },800);
+    }
   }
 }
-$('#rescanBtn').onclick=runOCR;
+$('#rescanBtn').onclick=()=>{currentOcrPromise=runOCR();};
 
 function validateMath(show=true){
   const s=+$('#sale').value,l=+$('#litres').value,p=+$('#cpl').value;
@@ -973,20 +1019,66 @@ $('#permissionBtn').onclick=()=>locate(true);
 
 $('#fillForm').onsubmit=async e=>{
   e.preventDefault();
-  const sale=+$('#sale').value,litres=+$('#litres').value;
-  let cpl=+$('#cpl').value;
-  if(!cpl)cpl=sale/litres*100;
-  const entry={
-    id:(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)),
-    dateTime:$('#dateTime').value,fuelType:$('#fuelType').value,sale:+sale.toFixed(2),litres:+litres.toFixed(2),
-    cpl:+cpl.toFixed(1),odometer:$('#odometer').value?+$('#odometer').value:null,station:$('#station').value.trim(),
-    lat:$('#lat').value?+$('#lat').value:null,lon:$('#lon').value?+$('#lon').value:null,notes:$('#notes').value.trim(),image:currentImage||''
-  };
-  entries.push(entry);await save();toast('Fill-up saved privately on this device');clearForm();showTab('history');
+
+  const submitBtn=$('#fillForm button[type="submit"]');
+  const originalLabel=submitBtn?submitBtn.textContent:'Save fill-up';
+
+  try{
+    if(submitBtn){submitBtn.disabled=true;submitBtn.textContent=ocrBusy?'Finishing scan…':'Saving…';}
+
+    // If the user taps Save the instant the values appear, wait for the active
+    // OCR task to settle before resetting the form. This prevents a late OCR
+    // callback from displaying an error after a successful save.
+    if(ocrBusy){
+      try{await currentOcrPromise}catch(e){}
+    }
+
+    const sale=+$('#sale').value;
+    const litres=+$('#litres').value;
+    let cpl=+$('#cpl').value;
+
+    if(!sale||!litres){
+      toast('Enter a valid total paid and litres before saving');
+      return;
+    }
+    if(!cpl)cpl=sale/litres*100;
+
+    const entry={
+      id:(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)),
+      dateTime:$('#dateTime').value,
+      fuelType:$('#fuelType').value,
+      sale:+sale.toFixed(2),
+      litres:+litres.toFixed(2),
+      cpl:+cpl.toFixed(1),
+      odometer:$('#odometer').value?+$('#odometer').value:null,
+      station:$('#station').value.trim(),
+      lat:$('#lat').value?+$('#lat').value:null,
+      lon:$('#lon').value?+$('#lon').value:null,
+      notes:$('#notes').value.trim(),
+      image:currentImage||''
+    };
+
+    entries.push(entry);
+    await save();
+
+    // Invalidate the completed scan before clearing UI.
+    ocrRunId++;
+    ocrBusy=false;
+    currentOcrPromise=Promise.resolve();
+
+    toast('Fill-up saved privately on this device');
+    clearForm();
+    showTab('history');
+  }catch(err){
+    console.error('Save failed',err);
+    toast('The fill-up could not be saved. Please try again.');
+  }finally{
+    if(submitBtn){submitBtn.disabled=false;submitBtn.textContent=originalLabel;}
+  }
 };
 
 function exportData(){
-  const payload={app:'Fuel Log',version:'2.0',privacy:'on-device',exportedAt:new Date().toISOString(),entries};
+  const payload={app:'Fuel Log',version:'2.1',privacy:'on-device',exportedAt:new Date().toISOString(),entries};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`fuel-log-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);
 }
@@ -1014,32 +1106,103 @@ $('#themeBtn').onclick=()=>{
 };
 
 let deferredInstallPrompt=null;
+let pwaInstallEventSeen=false;
+
+function isStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone===true;
+}
+async function getPwaStatus(){
+  const parts=[];
+  parts.push(location.protocol==='https:'?'HTTPS ✓':'HTTPS ✗');
+  parts.push(('serviceWorker' in navigator)?'service worker supported ✓':'service worker unsupported ✗');
+
+  let swState='not registered';
+  if('serviceWorker' in navigator){
+    try{
+      const reg=await navigator.serviceWorker.getRegistration();
+      if(reg)swState=reg.active?'active ✓':'registered, activating';
+    }catch(e){}
+  }
+  parts.push('service worker '+swState);
+
+  let manifestOK=false;
+  try{
+    const r=await fetch('./manifest.webmanifest',{cache:'no-store'});
+    if(r.ok){
+      const m=await r.json();
+      manifestOK=!!((m.name||m.short_name)&&m.start_url&&(m.display||m.display_override)&&Array.isArray(m.icons)&&m.icons.some(x=>String(x.sizes).includes('192x192'))&&m.icons.some(x=>String(x.sizes).includes('512x512')));
+    }
+  }catch(e){}
+  parts.push(manifestOK?'manifest ✓':'manifest ✗');
+
+  if(isStandalone())parts.push('already running as installed app ✓');
+  else if(pwaInstallEventSeen)parts.push('Chrome install prompt available ✓');
+  else parts.push('Chrome has not offered the install prompt yet');
+
+  return parts.join(' · ');
+}
+async function updatePwaStatus(){
+  const el=$('#pwaStatus');
+  if(el)el.textContent=await getPwaStatus();
+}
+
 window.addEventListener('beforeinstallprompt',e=>{
   e.preventDefault();
   deferredInstallPrompt=e;
+  pwaInstallEventSeen=true;
   const b=$('#installBtn');
   if(b)b.style.display='';
+  updatePwaStatus();
 });
+
+window.addEventListener('appinstalled',()=>{
+  deferredInstallPrompt=null;
+  const b=$('#installBtn');
+  if(b)b.style.display='none';
+  toast('Fuel Log installed');
+  updatePwaStatus();
+});
+
 const installBtn=$('#installBtn');
 if(installBtn)installBtn.onclick=async()=>{
+  if(isStandalone()){
+    toast('Fuel Log is already running as an installed app');
+    return;
+  }
   if(!deferredInstallPrompt){
-    toast('Use your browser menu and choose Add to Home screen / Install app');
+    toast('Chrome has not exposed the install prompt. Open the site directly in Chrome and use ⋮ → Add to Home screen / Install app.');
+    updatePwaStatus();
     return;
   }
   deferredInstallPrompt.prompt();
   await deferredInstallPrompt.userChoice;
   deferredInstallPrompt=null;
   installBtn.style.display='none';
+  updatePwaStatus();
 };
 
-if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('Service worker registration failed',err));
+const installHelpBtn=$('#installHelpBtn');
+if(installHelpBtn)installHelpBtn.onclick=async()=>{
+  await updatePwaStatus();
+  toast(isStandalone()?'Already installed':'PWA status refreshed');
+};
+
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  window.addEventListener('load',async()=>{
+    try{
+      const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./'});
+      await navigator.serviceWorker.ready;
+      console.log('Fuel Log service worker ready',reg.scope);
+    }catch(err){
+      console.warn('Service worker registration failed',err);
+    }
+    updatePwaStatus();
   });
 }
-
 loadEntries();
 refreshPermissionUI();
+updatePwaStatus();
 
 </script>
 </body>
