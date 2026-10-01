@@ -1,26 +1,43 @@
-# Fuel Log v2.1
+# Fuel Log v2.2 — Material / Android update
 
-Static Progressive Web App intended for GitHub Pages.
+Static PWA for GitHub Pages.
 
-## Publish
-Upload the CONTENTS of this folder to the root of a GitHub repository, then enable:
+## Update an existing GitHub Pages installation
+
+Upload/replace the contents of this folder in the root of the existing
+repository. In particular, replace:
+
+- index.html
+- sw.js
+- icons/*
+
+and ADD:
+
+- manifest.json
+
+`manifest.webmanifest` from an older release is no longer used and can be
+deleted, although leaving it in the repository will not affect v2.2.
+
+GitHub Pages should still be configured as:
+
 Settings > Pages > Deploy from a branch > main > /(root)
 
-GitHub Pages will serve `index.html` over HTTPS.
+After deployment, open the GitHub Pages URL in Chrome and refresh once.
+v2.2 uses a new service-worker cache and a new manifest filename, specifically
+to avoid stale PWA metadata from older releases.
 
-## Privacy model
-Fuel records, photos and GPS coordinates are stored locally using IndexedDB.
-There is no application backend and no reverse-geocoding request.
+## Privacy
 
-## Important
-The first OCR use requires internet access because Tesseract.js and its seven-segment OCR language model are loaded from public CDNs. Fuel Log does not intentionally upload the pump photo to those services.
+Photos, fill-up data, odometer values and GPS coordinates are stored in
+IndexedDB in the user's browser. There is no Fuel Log backend and no reverse
+geocoding request.
 
+## v2.2 fixes
 
-## Updating from v2.0
-Replace the files in the repository with the v2.1 files and commit them.
-After GitHub Pages deploys, open Fuel Log in Chrome and refresh once. The new
-service worker will replace the old cached application shell.
-
-v2.1 fixes an OCR/save race where a late OCR callback could display an OCR
-failure after a successful save. It also adds PWA install diagnostics and
-expanded manifest metadata.
+- OCR success is now sticky: once a valid sale/litres/price set is accepted,
+  a later OCR exception cannot replace it with an OCR-failed warning.
+- Save uses the valid values visible on screen and invalidates late OCR callbacks.
+- New Material/Android-inspired UI with top app bar, navigation drawer,
+  bottom navigation and floating action button.
+- Minimal new manifest.json and new icon files for cleaner Android PWA
+  installability.

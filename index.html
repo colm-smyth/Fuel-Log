@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<link rel="manifest" href="./manifest.webmanifest">
+<link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -133,22 +133,278 @@ small.muted{color:var(--muted)}
   .analytics-grid{grid-template-columns:1fr 1fr}
   .mobile-add{display:block}.toast{bottom:88px}
 }
+
+/* ===== Fuel Log v2.2 — Material-style application shell ===== */
+:root{
+  --m3-primary:#146c43;
+  --m3-on-primary:#ffffff;
+  --m3-primary-container:#a7f3c9;
+  --m3-on-primary-container:#002113;
+  --m3-surface:#f7faf7;
+  --m3-surface-1:#ffffff;
+  --m3-surface-2:#eef4ef;
+  --m3-surface-3:#e4ece6;
+  --m3-on-surface:#171d19;
+  --m3-on-surface-variant:#414943;
+  --m3-outline:#727a73;
+  --m3-outline-variant:#c1c9c2;
+  --m3-error:#ba1a1a;
+  --m3-shadow:0 1px 2px rgba(0,0,0,.08),0 2px 10px rgba(0,0,0,.06);
+}
+body{
+  background:var(--m3-surface);
+  color:var(--m3-on-surface);
+  font-family:Roboto,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+.topbar{
+  background:rgba(247,250,247,.94);
+  color:var(--m3-on-surface);
+  border-bottom:1px solid var(--m3-outline-variant);
+  backdrop-filter:blur(18px);
+}
+.topbar-inner{height:64px;padding:8px 16px;justify-content:flex-start;gap:10px}
+.brand{gap:10px;flex:1;font-size:20px;font-weight:650}
+.brand small{color:var(--m3-on-surface-variant);font-size:11px;margin-top:1px}
+.brand-mark{
+  width:40px;height:40px;border-radius:14px;background:var(--m3-primary);
+  display:grid;place-items:center;box-shadow:none;
+}
+.brand-mark svg,.drawer-app-icon svg{width:23px;height:23px;fill:white}
+.top-actions{margin-left:auto}
+.m3-icon-button{
+  width:48px;height:48px;border:none;border-radius:999px;background:transparent;
+  display:grid;place-items:center;color:var(--m3-on-surface);padding:0;
+}
+.m3-icon-button:hover{background:rgba(65,73,67,.08)}
+.m3-icon-button svg{width:24px;height:24px;fill:currentColor}
+.card{
+  border:1px solid var(--m3-outline-variant);
+  border-radius:24px;
+  background:var(--m3-surface-1);
+  box-shadow:none;
+}
+.hero{gap:14px}
+.hero-copy{background:linear-gradient(145deg,#edf8f0,#ffffff);padding:28px}
+.eyebrow{color:var(--m3-primary);letter-spacing:.1em}
+h1{font-weight:500;letter-spacing:-.035em}
+.subtitle{color:var(--m3-on-surface-variant)}
+.quick{box-shadow:none;padding:14px}
+.stat{
+  background:var(--m3-surface-2);
+  border:0;border-radius:18px;padding:16px;
+}
+.stat .k{color:var(--m3-on-surface-variant)}
+.stat .v{font-weight:650}
+.tabs{display:none}
+.capture-head,.form-head,.section-head{
+  border-color:var(--m3-outline-variant);padding:18px 20px;
+}
+.drop{
+  border-color:var(--m3-outline-variant);background:var(--m3-surface-2);
+  border-radius:22px;
+}
+.btn{
+  min-height:44px;border-radius:999px;padding:10px 20px;font-weight:650;
+  letter-spacing:.01em;box-shadow:none;
+}
+.btn-primary{background:var(--m3-primary);color:var(--m3-on-primary)}
+.btn-primary:hover{background:#0f5d38}
+.btn-dark{background:var(--m3-primary);color:white}
+.btn-light{
+  background:transparent;color:var(--m3-primary);
+  border:1px solid var(--m3-outline);
+}
+input,select,textarea{
+  min-height:56px;border:1px solid var(--m3-outline);border-radius:14px;
+  background:transparent;color:var(--m3-on-surface);padding:14px 14px;
+}
+input:focus,select:focus,textarea:focus{
+  border:2px solid var(--m3-primary);box-shadow:none;
+}
+label{font-size:13px;color:var(--m3-on-surface-variant)}
+.notice{
+  background:#e9f8ee;border:1px solid #a8dab8;color:#125c37;
+  border-radius:18px;padding:14px 16px;
+}
+.notice.warn{background:#fff8e6;border-color:#e6c768;color:#745b00}
+.permission-card{
+  background:#e9f8ee;border-color:#a8dab8;border-radius:18px;
+}
+.permission-card.warn{background:#fff8e6;border-color:#e6c768}
+.pill{background:var(--m3-surface-2);border-radius:999px}
+th{background:var(--m3-surface-2)}
+.settings-box{
+  background:var(--m3-surface-2);border:0;border-radius:20px;padding:18px;
+}
+
+/* Drawer */
+.m3-scrim{
+  position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:80;
+  opacity:0;pointer-events:none;transition:opacity .2s ease;
+}
+.m3-scrim.open{opacity:1;pointer-events:auto}
+.m3-drawer{
+  position:fixed;left:0;top:0;bottom:0;width:min(360px,88vw);z-index:90;
+  background:#f7faf7;border-radius:0 28px 28px 0;
+  transform:translateX(-105%);transition:transform .24s cubic-bezier(.2,0,0,1);
+  padding:14px 12px 18px;display:flex;flex-direction:column;
+  box-shadow:0 10px 40px rgba(0,0,0,.18);
+}
+.m3-drawer.open{transform:translateX(0)}
+.drawer-head{display:flex;align-items:center;gap:12px;padding:6px 8px 18px}
+.drawer-app-icon{width:48px;height:48px;border-radius:16px;background:var(--m3-primary);display:grid;place-items:center}
+.drawer-head strong{display:block;font-size:20px;font-weight:650}
+.drawer-head span{display:block;color:var(--m3-on-surface-variant);font-size:12px;margin-top:2px}
+.drawer-close{margin-left:auto;font-size:28px;font-weight:300}
+.drawer-nav{display:flex;flex-direction:column;gap:4px}
+.drawer-item{
+  width:100%;border:0;background:transparent;border-radius:999px;padding:11px 16px;
+  display:flex;align-items:center;gap:14px;text-align:left;color:var(--m3-on-surface);
+}
+.drawer-item:hover{background:rgba(65,73,67,.07)}
+.drawer-item.active{background:var(--m3-primary-container);color:var(--m3-on-primary-container)}
+.drawer-icon{width:28px;text-align:center;font-size:20px}
+.drawer-item b{display:block;font-size:14px;font-weight:650}
+.drawer-item small{display:block;font-size:11px;color:var(--m3-on-surface-variant);margin-top:2px}
+.drawer-divider{height:1px;background:var(--m3-outline-variant);margin:14px 8px}
+.drawer-actions{display:flex;flex-direction:column;gap:2px}
+.drawer-action{
+  border:0;background:transparent;border-radius:16px;padding:11px 16px;
+  display:flex;gap:14px;align-items:center;text-align:left;color:var(--m3-on-surface);
+}
+.drawer-action:hover{background:rgba(65,73,67,.07)}
+.drawer-privacy{
+  margin-top:auto;background:var(--m3-surface-2);border-radius:18px;padding:14px 16px;
+}
+.drawer-privacy strong{display:block;color:var(--m3-primary);font-size:13px}
+.drawer-privacy span{display:block;font-size:11px;line-height:1.45;color:var(--m3-on-surface-variant);margin-top:4px}
+.drawer-version{font-size:10px;color:var(--m3-on-surface-variant);padding:10px 16px 0}
+
+/* Android bottom navigation */
+.m3-bottom-nav{
+  display:none;position:fixed;left:0;right:0;bottom:0;z-index:50;
+  height:78px;padding:6px 8px max(6px,env(safe-area-inset-bottom));
+  background:rgba(247,250,247,.96);border-top:1px solid var(--m3-outline-variant);
+  backdrop-filter:blur(16px);
+}
+.bottom-item{
+  flex:1;border:0;background:transparent;color:var(--m3-on-surface-variant);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:11px;font-weight:600;border-radius:18px;
+}
+.bottom-icon{
+  min-width:48px;height:30px;border-radius:999px;display:grid;place-items:center;
+  font-size:20px;line-height:1;
+}
+.bottom-item.active{color:var(--m3-on-primary-container)}
+.bottom-item.active .bottom-icon{background:var(--m3-primary-container)}
+
+.m3-fab{
+  display:none;position:fixed;right:20px;bottom:94px;z-index:55;
+  width:58px;height:58px;border:0;border-radius:18px;
+  background:var(--m3-primary-container);color:var(--m3-on-primary-container);
+  box-shadow:0 4px 12px rgba(0,0,0,.22);place-items:center;
+}
+.m3-fab svg{width:28px;height:28px;fill:currentColor}
+.mobile-add{display:none!important}
+
+@media(max-width:820px){
+  main{padding:16px 12px 108px}
+  .hero{grid-template-columns:1fr}
+  .hero-copy{padding:22px}
+  .hero-copy h1{font-size:36px}
+  .quick{grid-template-columns:1fr 1fr}
+  .capture-grid{grid-template-columns:1fr}
+  .m3-bottom-nav{display:flex}
+  .m3-fab{display:grid}
+}
+@media(max-width:560px){
+  .topbar-inner{padding:8px 10px}
+  .brand-mark{width:38px;height:38px;border-radius:13px}
+  .brand{font-size:19px}
+  main{padding:12px 10px 108px}
+  .hero-copy h1{font-size:34px;line-height:1.02}
+  .hero-copy .subtitle{font-size:14px}
+  .capture-head,.form-head,.section-head{padding:16px}
+  .camera-zone,.form-body{padding:14px}
+  .form-grid{gap:12px}
+  .analytics-grid{grid-template-columns:1fr 1fr}
+  .settings{padding:14px}
+}
+
+/* Dark material surfaces */
+body.dark{
+  --m3-surface:#101411;--m3-surface-1:#171c18;--m3-surface-2:#202621;
+  --m3-surface-3:#2a312b;--m3-on-surface:#e2e3df;--m3-on-surface-variant:#c0c9c0;
+  --m3-outline:#89928a;--m3-outline-variant:#414942;
+  background:var(--m3-surface);color:var(--m3-on-surface);
+}
+body.dark .topbar,body.dark .m3-bottom-nav,body.dark .m3-drawer{background:#171c18;color:var(--m3-on-surface)}
+body.dark .card,body.dark input,body.dark select,body.dark textarea{background:var(--m3-surface-1);color:var(--m3-on-surface)}
+body.dark .hero-copy{background:linear-gradient(145deg,#16261d,#171c18)}
+body.dark .scan-crop{background:#202621}
+
 </style>
 </head>
 <body>
 <div class="shell">
 <header class="topbar">
   <div class="topbar-inner">
+    <button class="m3-icon-button" id="menuBtn" aria-label="Open navigation">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16v2H4zm0 4.5h16v2H4zm0 4.5h16v2H4z"/></svg>
+    </button>
     <div class="brand">
-      <div class="brand-mark">⛽</div>
-      <div>Fuel Log<small>Private, on-device fill-up tracker</small></div>
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9a2 2 0 0 1 2 2v7.4l1.6 1.6c.9.9 1.4 2.1 1.4 3.4V19a3 3 0 0 1-6 0v-3h2v3a1 1 0 0 0 2 0v-2.6c0-.7-.3-1.3-.7-1.8L17 14.3V22H4V4a2 2 0 0 1 2-2zm0 2v16h9V4H6zm2 2h5v5H8V6z"/></svg>
+      </div>
+      <div>Fuel Log<small>Private · on-device</small></div>
     </div>
     <div class="top-actions">
-      <button class="icon-btn" id="exportBtn">⇩ <span class="text-hide">Export</span></button>
-      <button class="icon-btn" id="themeBtn" title="Toggle theme">◐</button>
+      <button class="m3-icon-button" id="themeBtn" title="Toggle appearance" aria-label="Toggle appearance">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9c0-.4 0-.8-.1-1.2A7 7 0 0 1 12 3zm0 2.1v13.8A7 7 0 0 1 12 5.1z"/></svg>
+      </button>
     </div>
   </div>
 </header>
+
+<div class="m3-scrim" id="drawerScrim"></div>
+<aside class="m3-drawer" id="navDrawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div class="drawer-app-icon">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9a2 2 0 0 1 2 2v7.4l1.6 1.6c.9.9 1.4 2.1 1.4 3.4V19a3 3 0 0 1-6 0v-3h2v3a1 1 0 0 0 2 0v-2.6c0-.7-.3-1.3-.7-1.8L17 14.3V22H4V4a2 2 0 0 1 2-2zm0 2v16h9V4H6zm2 2h5v5H8V6z"/></svg>
+    </div>
+    <div><strong>Fuel Log</strong><span>Private petrol tracker</span></div>
+    <button class="m3-icon-button drawer-close" id="drawerClose" aria-label="Close navigation">×</button>
+  </div>
+
+  <nav class="drawer-nav">
+    <button class="drawer-item active" data-tab="add">
+      <span class="drawer-icon">＋</span><span><b>Add fill-up</b><small>Photograph or enter a fill</small></span>
+    </button>
+    <button class="drawer-item" data-tab="history">
+      <span class="drawer-icon">▤</span><span><b>History</b><small>Your saved fill-ups</small></span>
+    </button>
+    <button class="drawer-item" data-tab="analytics">
+      <span class="drawer-icon">▥</span><span><b>Insights</b><small>Spend, litres and prices</small></span>
+    </button>
+    <button class="drawer-item" data-tab="settings">
+      <span class="drawer-icon">⚙</span><span><b>Settings</b><small>Privacy, backup and install</small></span>
+    </button>
+  </nav>
+
+  <div class="drawer-divider"></div>
+  <div class="drawer-actions">
+    <button class="drawer-action" id="drawerExport">⇩ <span>Export backup</span></button>
+    <button class="drawer-action" id="drawerInstall">⬇ <span>Install Fuel Log</span></button>
+    <button class="drawer-action" id="drawerTheme">◐ <span>Change appearance</span></button>
+  </div>
+
+  <div class="drawer-privacy">
+    <strong>Private by design</strong>
+    <span>Photos, GPS and fuel records stay in this browser on this device.</span>
+  </div>
+  <div class="drawer-version">Fuel Log v2.2</div>
+</aside>
 
 <main>
 <section class="hero">
@@ -322,7 +578,15 @@ small.muted{color:var(--muted)}
   </div>
 </section>
 </main>
-<button class="mobile-add" id="mobileAdd" title="Add fill-up">＋</button>
+<button class="m3-fab" id="mobileAdd" title="New fill-up" aria-label="New fill-up">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
+</button>
+<nav class="m3-bottom-nav" aria-label="Primary">
+  <button class="bottom-item active" data-tab="add"><span class="bottom-icon">＋</span><span>Add</span></button>
+  <button class="bottom-item" data-tab="history"><span class="bottom-icon">▤</span><span>History</span></button>
+  <button class="bottom-item" data-tab="analytics"><span class="bottom-icon">▥</span><span>Insights</span></button>
+  <button class="bottom-item" data-tab="settings"><span class="bottom-icon">⚙</span><span>Settings</span></button>
+</nav>
 <div class="toast" id="toast"></div>
 </div>
 
@@ -431,9 +695,31 @@ function esc(v=''){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt
 
 function showTab(name){
   $$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  $$('.bottom-item').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  $$('.drawer-item').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
   $$('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+name));
-  if(name==='add') window.scrollTo({top:0,behavior:'smooth'});
+  closeDrawer();
+  if(name==='add')window.scrollTo({top:0,behavior:'smooth'});
 }
+
+function openDrawer(){
+  $('#navDrawer').classList.add('open');
+  $('#drawerScrim').classList.add('open');
+  $('#navDrawer').setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+}
+function closeDrawer(){
+  $('#navDrawer').classList.remove('open');
+  $('#drawerScrim').classList.remove('open');
+  $('#navDrawer').setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+}
+$('#menuBtn').onclick=openDrawer;
+$('#drawerClose').onclick=closeDrawer;
+$('#drawerScrim').onclick=closeDrawer;
+$$('.drawer-item').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+$$('.bottom-item').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+
 $$('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 $('#mobileAdd').onclick=()=>showTab('add');
 
@@ -796,20 +1082,41 @@ function activeDigitModelName(){
   if(!digitWorkerPromise)return '';
   return '';
 }
+
+function getVisibleFuelValues(){
+  const sale=Number($('#sale').value);
+  const litres=Number($('#litres').value);
+  const cpl=Number($('#cpl').value);
+  if(!Number.isFinite(sale)||!Number.isFinite(litres)||sale<=0||litres<=0)return null;
+  const calculated=sale/litres*100;
+  const effectiveCpl=(Number.isFinite(cpl)&&cpl>0)?cpl:calculated;
+  const diff=Math.abs(sale-(litres*effectiveCpl/100));
+  const coherent=effectiveCpl>=100&&effectiveCpl<=300&&diff<=Math.max(.20,sale*.015);
+  return coherent?{sale,litres,cpl:effectiveCpl}:null;
+}
+function showOcrSuccess(values,detail=''){
+  $('#ocrBadge').textContent='Values ready';
+  $('#autoNotice').className='notice';
+  $('#autoNotice').textContent=
+    `Pump values captured: ${euro(values.sale)}, ${values.litres.toFixed(2)} L, ${values.cpl.toFixed(1)} c/L.`+
+    (detail?` ${detail}`:'')+
+    ' Check the figures, then save the fill-up.';
+}
 async function runOCR(){
   if(!currentImage){toast('Take or choose a photo first');return false}
 
   const myRun=++ocrRunId;
   const sourceImage=currentImage;
   ocrBusy=true;
+  let accepted=null;
 
   const stillCurrent=()=>myRun===ocrRunId && currentImage===sourceImage;
-  const ui=(fn)=>{if(stillCurrent())fn()};
+  const ui=fn=>{if(stillCurrent())fn()};
 
   ui(()=>{
     $('#progressWrap').classList.add('show');
     $('#scanDebug').classList.remove('show');
-    $('#ocrBadge').textContent='Scanning…';
+    $('#ocrBadge').textContent='Scanning';
     $('#progressBar').style.width='5%';
     $('#progressText').textContent='Detecting pump LCD…';
   });
@@ -824,40 +1131,33 @@ async function runOCR(){
     const scan=await scanMainPumpDisplay(img);
     if(!stillCurrent())return false;
 
-    ui(()=>{
-      $('#sale').value='';
-      $('#litres').value='';
-      $('#cpl').value='';
-    });
-
     if(!scan.displayFound){
       ui(()=>{
         $('#ocrBadge').textContent='LCD not found';
         $('#autoNotice').className='notice warn';
-        $('#autoNotice').textContent='I could not isolate the large two-row LCD display. Retake the photo with the transaction display reasonably straight and clearly visible.';
+        $('#autoNotice').textContent='The transaction LCD could not be isolated. Retake the photo with the main two-row display clearly visible.';
       });
       return false;
     }
 
     const chosen=scan.pair;
-
     if(chosen){
-      const worker=await getDigitWorker();
-      if(!stillCurrent())return false;
-      const model=worker._fuelLogModel==='7seg'?'seven-segment OCR':'fallback OCR';
+      accepted={
+        sale:Number(chosen.sale),
+        litres:Number(chosen.litres),
+        cpl:Number(chosen.cpl)
+      };
 
+      // Commit the accepted values first. From this point onward, even if a
+      // nonessential UI operation throws, the scan is considered successful.
       ui(()=>{
-        $('#sale').value=(+chosen.sale).toFixed(2);
-        $('#litres').value=(+chosen.litres).toFixed(2);
-        $('#cpl').value=(+chosen.cpl).toFixed(1);
-
-        $('#ocrBadge').textContent='LCD read';
-        $('#autoNotice').className='notice';
-        $('#autoNotice').textContent=
-          `LCD scan (${model}) found ${euro(chosen.sale)}, ${(+chosen.litres).toFixed(2)} L and calculates ${(+chosen.cpl).toFixed(1)} c/L. `+
-          `Sale candidates: ${scan.sales.map(v=>Number(v).toFixed(2)).join(', ')||'none'}; `+
-          `litres candidates: ${scan.litres.map(v=>Number(v).toFixed(2)).join(', ')||'none'}. Please visually confirm before saving.`;
-        validateMath(false);
+        $('#sale').value=accepted.sale.toFixed(2);
+        $('#litres').value=accepted.litres.toFixed(2);
+        $('#cpl').value=accepted.cpl.toFixed(1);
+        showOcrSuccess(
+          accepted,
+          `The sale and litres rows agree mathematically (${accepted.cpl.toFixed(1)} c/L).`
+        );
       });
       return true;
     }
@@ -868,24 +1168,34 @@ async function runOCR(){
       if(s)$('#sale').value=(+s).toFixed(2);
       if(l)$('#litres').value=(+l).toFixed(2);
 
-      $('#ocrBadge').textContent='Review';
-      $('#autoNotice').className='notice warn';
-      $('#autoNotice').textContent=
-        `The LCD was isolated, but the two rows did not form a believable sale/litres pair. `+
-        `Sale row candidates: ${scan.sales.map(v=>Number(v).toFixed(2)).join(', ')||'none'}; `+
-        `litres row candidates: ${scan.litres.map(v=>Number(v).toFixed(2)).join(', ')||'none'}. `+
-        `The app will not use small printed numbers elsewhere on the pump.`;
+      const visible=getVisibleFuelValues();
+      if(visible){
+        accepted=visible;
+        showOcrSuccess(visible,'The values passed the pump-price consistency check.');
+      }else{
+        $('#ocrBadge').textContent='Review';
+        $('#autoNotice').className='notice warn';
+        $('#autoNotice').textContent='The display was found, but the two rows did not form a reliable transaction. Review or enter the values manually.';
+      }
     });
-    return false;
+    return !!accepted;
 
   }catch(e){
-    console.error(e);
-    // Do not allow a stale scan to overwrite the UI after the user has saved
-    // the fill-up and the form has been cleared.
+    console.error('OCR scan exception:',e);
+
+    // Critical v2.2 fix: a valid accepted/displayed transaction is success,
+    // regardless of a later nonessential OCR/UI exception.
+    const visible=accepted || getVisibleFuelValues();
+    if(visible && stillCurrent()){
+      accepted=visible;
+      ui(()=>showOcrSuccess(visible,'Recognition completed with a recoverable post-processing warning.'));
+      return true;
+    }
+
     ui(()=>{
       $('#ocrBadge').textContent='OCR unavailable';
       $('#autoNotice').className='notice warn';
-      $('#autoNotice').textContent='Automatic LCD OCR could not complete. You can still enter the values manually.';
+      $('#autoNotice').textContent='The pump values could not be read automatically. You can enter them manually.';
     });
     return false;
   }finally{
@@ -894,7 +1204,7 @@ async function runOCR(){
       $('#progressBar').style.width='100%';
       setTimeout(()=>{
         if(myRun===ocrRunId)$('#progressWrap').classList.remove('show');
-      },800);
+      },500);
     }
   }
 }
@@ -1024,24 +1334,30 @@ $('#fillForm').onsubmit=async e=>{
   const originalLabel=submitBtn?submitBtn.textContent:'Save fill-up';
 
   try{
-    if(submitBtn){submitBtn.disabled=true;submitBtn.textContent=ocrBusy?'Finishing scan…':'Saving…';}
+    if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Saving…';}
 
-    // If the user taps Save the instant the values appear, wait for the active
-    // OCR task to settle before resetting the form. This prevents a late OCR
-    // callback from displaying an error after a successful save.
-    if(ocrBusy){
+    // Prefer the values the user can actually see. If they are already a valid
+    // pump transaction, cancel/invalidate any late OCR callbacks immediately.
+    let visible=getVisibleFuelValues();
+    if(visible){
+      ocrRunId++;
+      ocrBusy=false;
+      currentOcrPromise=Promise.resolve();
+    }else if(ocrBusy){
+      if(submitBtn)submitBtn.textContent='Finishing scan…';
       try{await currentOcrPromise}catch(e){}
+      visible=getVisibleFuelValues();
     }
 
-    const sale=+$('#sale').value;
-    const litres=+$('#litres').value;
-    let cpl=+$('#cpl').value;
+    const sale=Number($('#sale').value);
+    const litres=Number($('#litres').value);
+    let cpl=Number($('#cpl').value);
 
-    if(!sale||!litres){
+    if(!Number.isFinite(sale)||sale<=0||!Number.isFinite(litres)||litres<=0){
       toast('Enter a valid total paid and litres before saving');
       return;
     }
-    if(!cpl)cpl=sale/litres*100;
+    if(!Number.isFinite(cpl)||cpl<=0)cpl=sale/litres*100;
 
     const entry={
       id:(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)),
@@ -1061,12 +1377,11 @@ $('#fillForm').onsubmit=async e=>{
     entries.push(entry);
     await save();
 
-    // Invalidate the completed scan before clearing UI.
     ocrRunId++;
     ocrBusy=false;
     currentOcrPromise=Promise.resolve();
 
-    toast('Fill-up saved privately on this device');
+    toast('Fill-up saved');
     clearForm();
     showTab('history');
   }catch(err){
@@ -1078,7 +1393,7 @@ $('#fillForm').onsubmit=async e=>{
 };
 
 function exportData(){
-  const payload={app:'Fuel Log',version:'2.1',privacy:'on-device',exportedAt:new Date().toISOString(),entries};
+  const payload={app:'Fuel Log',version:'2.2',privacy:'on-device',exportedAt:new Date().toISOString(),entries};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`fuel-log-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);
 }
@@ -1096,14 +1411,13 @@ $('#resetBtn').onclick=async()=>{if(confirm('Delete every saved fill-up from thi
 
 $('#themeBtn').onclick=()=>{
   document.body.classList.toggle('dark');
-  if(document.body.classList.contains('dark')){
-    document.documentElement.style.setProperty('--bg','#0b1220');document.documentElement.style.setProperty('--panel','#111827');
-    document.documentElement.style.setProperty('--panel2','#172033');document.documentElement.style.setProperty('--text','#f8fafc');
-    document.documentElement.style.setProperty('--muted','#94a3b8');document.documentElement.style.setProperty('--line','#263244');
-  }else{
-    ['--bg','--panel','--panel2','--text','--muted','--line'].forEach(x=>document.documentElement.style.removeProperty(x));
-  }
+  localStorage.setItem('fuelLog.theme',document.body.classList.contains('dark')?'dark':'light');
 };
+
+
+$('#drawerExport').onclick=()=>{exportData();closeDrawer();};
+$('#drawerTheme').onclick=()=>{$('#themeBtn').click();closeDrawer();};
+$('#drawerInstall').onclick=()=>{closeDrawer();const b=$('#installBtn');if(b)b.click();};
 
 let deferredInstallPrompt=null;
 let pwaInstallEventSeen=false;
@@ -1128,7 +1442,7 @@ async function getPwaStatus(){
 
   let manifestOK=false;
   try{
-    const r=await fetch('./manifest.webmanifest',{cache:'no-store'});
+    const r=await fetch('./manifest.json',{cache:'no-store'});
     if(r.ok){
       const m=await r.json();
       manifestOK=!!((m.name||m.short_name)&&m.start_url&&(m.display||m.display_override)&&Array.isArray(m.icons)&&m.icons.some(x=>String(x.sizes).includes('192x192'))&&m.icons.some(x=>String(x.sizes).includes('512x512')));
@@ -1138,7 +1452,7 @@ async function getPwaStatus(){
 
   if(isStandalone())parts.push('already running as installed app ✓');
   else if(pwaInstallEventSeen)parts.push('Chrome install prompt available ✓');
-  else parts.push('Chrome has not offered the install prompt yet');
+  else parts.push('browser install prompt not available yet');
 
   return parts.join(' · ');
 }
@@ -1189,9 +1503,17 @@ if(installHelpBtn)installHelpBtn.onclick=async()=>{
 };
 
 if('serviceWorker' in navigator && location.protocol==='https:'){
+  let refreshing=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(refreshing)return;
+    refreshing=true;
+    // A single reload activates the newly deployed application shell.
+    location.reload();
+  });
   window.addEventListener('load',async()=>{
     try{
       const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./'});
+      await reg.update();
       await navigator.serviceWorker.ready;
       console.log('Fuel Log service worker ready',reg.scope);
     }catch(err){
@@ -1200,6 +1522,7 @@ if('serviceWorker' in navigator && location.protocol==='https:'){
     updatePwaStatus();
   });
 }
+if(localStorage.getItem('fuelLog.theme')==='dark')document.body.classList.add('dark');
 loadEntries();
 refreshPermissionUI();
 updatePwaStatus();
